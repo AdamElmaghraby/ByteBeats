@@ -7,14 +7,20 @@ import (
 	"syscall"
 
 	"github.com/AdamElmaghraby/ByteBeats/internal/discord"
+	"github.com/joho/godotenv"
+
 	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
-	token := os.Getenv("BOT_TOKEN")
-	if token == ""{
-		log.Fatalf("Missing BOT_TOKEN env variable")
-	}
+	if err := godotenv.Load(); err != nil {
+        log.Println("No .env file found; falling back to real env vars")
+    }
+
+    token := os.Getenv("BOT_TOKEN")
+    if token == "" {
+        log.Fatal("Missing BOT_TOKEN")
+    }
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
