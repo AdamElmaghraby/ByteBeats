@@ -19,11 +19,11 @@ var playCommand = &discordgo.ApplicationCommand{
     },
 }
 
-func RegisterHandler(session *discordgo.Session) {
+func RegisterHandlers(session *discordgo.Session) {
 	session.AddHandler(onInteractionCreate)
 
 	_, err := session.ApplicationCommandCreate(
-		session.State.SessionID,
+		session.State.User.ID,
 		"",
 		playCommand,
 	)

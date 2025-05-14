@@ -13,8 +13,10 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-        log.Println("No .env file found; falling back to real env vars")
+
+	err := godotenv.Load()
+	if err != nil {
+        log.Println("No .env file found")
     }
 
     token := os.Getenv("BOT_TOKEN")
@@ -27,12 +29,14 @@ func main() {
 		log.Fatalf("Error creating Discord session: %v", err)
 	}
 
-	discord.RegisterHandler(dg)
+	
 
-	if err := dg.Open(); err != nil {
+	err = dg.Open()
+	if err != nil {
 		log.Fatalf("Error opening connection: %v", err)
 	}
 	defer dg.Close()
+	discord.RegisterHandlers(dg)
 	log.Println(`⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡟⠷⣶⣤⠀⠀⠀⠀⠀
 ⠀⠀⠀⢸⠟⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣼⡇⢀⣸⡇⠀⠀⠀⠀⠀
