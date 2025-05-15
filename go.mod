@@ -4,8 +4,8 @@ go 1.22.4
 
 require (
 	github.com/bwmarrin/discordgo v0.28.1
-	github.com/hraban/opus v0.0.0-20230925203106-0188a62cb302
 	github.com/joho/godotenv v1.5.1
+	layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32
 )
 
 require (

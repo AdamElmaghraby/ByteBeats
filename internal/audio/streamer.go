@@ -2,11 +2,12 @@ package audio
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os/exec"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/hraban/opus"
+	"layeh.com/gopus"
 )
 
 func StreamYouTube(ctx context.Context, url string, vc *discordgo.VoiceConnection) error {
@@ -46,14 +47,14 @@ func StreamYouTube(ctx context.Context, url string, vc *discordgo.VoiceConnectio
 	vc.Speaking(true)
 	defer vc.Speaking(false)
 
+	opusEncoder, err := gopus.NewEncoder(48000, 2, gopus.Audio)
+	if err != nil {
+    	return fmt.Errorf("could not create gopus encoder: %w", err)
+	}
+
 	const frameSize = 1920
 	pcmBuf := make([]byte, frameSize)
 	opusBuf := make([]byte, 4000)
-
-	encoder, err := opus.NewEncoder(48000, 2, opus.AppAudio)
-	if err != nil {
-    	return err
-	}
 
 	for {
 		n, err := io.ReadFull(pcmOut, pcmBuf)
@@ -61,12 +62,12 @@ func StreamYouTube(ctx context.Context, url string, vc *discordgo.VoiceConnectio
 			break
 		}
 
-		opusFrameSize, err := encoder.Encode(pcmBuf[:n], opusBuf)
-		if err != nil {
-			return err
-		}
+		frameSize, err := opusEncoder.Encode(pcmBuf[:n], opusBuf)
+			if err != nil {
+    			return fmt.Errorf("opus encode error: %w", err)
+			}
 
-		vc.OpusSend <- opusBuf[:opusFrameSize]
+		vc.OpusSend <- opusBuf[:frameSize]
 
 	}
 
