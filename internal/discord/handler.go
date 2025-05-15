@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/AdamElmaghraby/ByteBeats/internal/audio"
 	"github.com/bwmarrin/discordgo"
 )
 
