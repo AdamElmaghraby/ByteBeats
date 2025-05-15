@@ -12,7 +12,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-const GuildID = "662430019573907488"
 
 func main() {
 
