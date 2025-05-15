@@ -12,6 +12,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const GuildID = "662430019573907488"
+
 func main() {
 
 	err := godotenv.Load()
@@ -53,6 +55,8 @@ func main() {
 ⠀⠸⠿⠿⠷⠶⠶⠶⠾⠿⠿⠿⠿⠾⠿⠿⠷⠿⠿⠿⠿⠷⠶⠶⠶⠾⠿⠿⠇⠀
 ⠀⠀
 ByteBeats is now up and running! Press CTRL-C to exit.`)
+
+
 
 stop := make(chan os.Signal, 1)
 signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

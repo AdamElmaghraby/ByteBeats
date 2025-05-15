@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+
 var playCommand = &discordgo.ApplicationCommand{
     Name:        "play",
     Description: "Play audio from a YouTube link",
