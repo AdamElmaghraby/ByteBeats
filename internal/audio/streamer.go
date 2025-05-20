@@ -2,47 +2,59 @@ package audio
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/jogramming/dca"
 )
 
 func StreamYouTube(ctx context.Context, url string, vc *discordgo.VoiceConnection) error {
-	cmd := exec.Command("youtube-dl", "-x", "--audio-format", "mp3", "-o", "temp_audio.mp3", url)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("youtube-dl error: %w", err)
-	}
-	defer os.Remove("temp_audio.mp3")
+	ytdlp := exec.CommandContext(ctx, "yt-dlp", "-f", "bestaudio", "-o", "-", url)
+	
+	ffmpeg := exec.CommandContext(ctx,
+        "ffmpeg", "-i", "pipe:0",
+        "-analyzeduration", "0", "-loglevel", "0",
+        "-ac", "2", "-ar", "48000",
+        "-f", "s16le", "pipe:1",
+    )
 
-	opts := dca.StdEncodeOptions
-	opts.RawOutput = true
-	opts.Bitrate = 96
-	opts.Application = "lowdelay"
+	r, w := io.Pipe()
+    ytdlp.Stdout = w
+    ffmpeg.Stdin = r
 
-	encodingSession, err := dca.EncodeFile("temp_audio.mp3", opts)
-	if err != nil {
-		return fmt.Errorf("dca encode error: %w", err)
-	}
-	defer encodingSession.Cleanup()
+	pcmOut, err := ffmpeg.StdoutPipe()
+    if err != nil {
+        return err
+    }
+
+    if err := ytdlp.Start(); err != nil {
+        return err
+    }
+    if err := ffmpeg.Start(); err != nil {
+        return err
+    }
 
 	vc.Speaking(true)
 	defer vc.Speaking(false)
 
-	done := make(chan error)
-	dca.NewStream(encodingSession, vc, done)
+	vc.Speaking(true)
+    defer vc.Speaking(false)
 
-	select {
-	case err := <-done:
-		if err != nil && err.Error() != "EOF" {
-			return fmt.Errorf("stream error: %w", err)
-		}
-	case <-ctx.Done():
-		return fmt.Errorf("playback timed out after %v", 10*time.Minute)
-	}
+    frameSize := 1920
+    pcmBuf := make([]byte, frameSize*2*2) 
+    opusBuf := make([]byte, 4000)
 
-	return nil
+	for {
+        n, err := pcmOut.Read(pcmBuf)
+        if err != nil {
+            break
+        }
+        opusFrame, err := vc.OpusEncode(pcmBuf[:n], opusBuf)
+        if err != nil {
+            return err
+        }
+        vc.OpusSend <- opusBuf[:opusFrame]
+    }
+    return nil
 }

@@ -48,7 +48,7 @@ func InteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
     }()
 
     s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-        Content: "▶️ Streaming now!",
+        Content: "▶️ Streamin your beats now!",
     })
 
 }
