@@ -2,14 +2,12 @@ package discord
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/AdamElmaghraby/ByteBeats/internal/audio"
 	"github.com/bwmarrin/discordgo"
 )
 
-func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func InteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 
 	if data.Name != "play" {
@@ -27,7 +25,7 @@ func onInteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		})
 		return
-	}
+	} 
 	
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

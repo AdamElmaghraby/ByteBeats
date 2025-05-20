@@ -7,7 +7,9 @@ import (
 )
 
 
-var playCommand = &discordgo.ApplicationCommand{
+
+func RegisterCommand(session *discordgo.Session) error {
+	_, err := session.ApplicationCommandCreate(s.State.User.ID, "",	&discordgo.ApplicationCommand{
     Name:        "play",
     Description: "Play audio from a YouTube link",
     Options: []*discordgo.ApplicationCommandOption{
@@ -18,17 +20,8 @@ var playCommand = &discordgo.ApplicationCommand{
             Required:    true,
         },
     },
-}
+})
+	
+	return err
 
-func RegisterHandlers(session *discordgo.Session) {
-	session.AddHandler(onInteractionCreate)
-
-	_, err := session.ApplicationCommandCreate(
-		session.State.User.ID,
-		"",
-		playCommand,
-	)
-	if err != nil {
-		log.Fatalf("Cannot create slash command: %v", err)
-	}
 }
