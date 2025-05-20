@@ -15,6 +15,10 @@ func InteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	url := data.Options[0].StringValue()
+	
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+	})
 
 	vs, err := s.State.VoiceState(i.GuildID, i.Member.User.ID)
     if err != nil || vs == nil || vs.ChannelID == "" {
@@ -26,36 +30,25 @@ func InteractionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 		return
 	} 
-	
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-	})
 
+	vc, err := s.ChannelVoiceJoin(guildID, vs.ChannelID, false, true)
+    if err != nil {
+        s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+            Content: "Failed to join voice channel.",
+        })
+        return
+    }
+	
 	go func() {
-		vc, err := s.ChannelVoiceJoin(i.GuildID, vs.ChannelID, false, true)
-		if err != nil {
-			msg := fmt.Sprintf("Failed to join voice channel: %v", err)
-			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{Content: msg})
-			return
-		}
-		defer vc.Disconnect()
+        err := audio.StreamURL(context.Background(), url, vc)
+        if err != nil {
+            s.ChannelMessageSend(vs.ChannelID, "Error streaming audio: "+err.Error())
+        }
+        vc.Disconnect()
+    }()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-		defer cancel()
-
-		err = audio.StreamYouTube(ctx, url, vc)
-		if err != nil {
-			msg := fmt.Sprintf("Playback error: %v", err)
-			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{Content: msg})
-			return
-		}
-
-		s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
-			Content: "Finished playing your beats!",
-		})
-
-
-	}()
-	
+    s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+        Content: "▶️ Streaming now!",
+    })
 
 }
