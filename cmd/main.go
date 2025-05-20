@@ -30,6 +30,10 @@ func main() {
 		log.Fatalf("Error creating Discord session: %v", err)
 	}
 
+	dg.AddHandler(discord.InteractionCreate)
+    if err := discord.RegisterCommands(dg); err != nil {
+        log.Fatal("Cannot register commands:", err)
+    }
 	
 
 	err = dg.Open()
