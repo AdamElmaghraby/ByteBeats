@@ -1,60 +1,39 @@
 package audio
 
 import (
-	"context"
-	"io"
-	"os"
-	"os/exec"
-
-	"github.com/bwmarrin/discordgo"
+    "io"
+    "log"
+    "github.com/jonas747/dca"
+    "github.com/bwmarrin/discordgo"
 )
 
-func StreamYouTube(ctx context.Context, url string, vc *discordgo.VoiceConnection) error {
-	ytdlp := exec.CommandContext(ctx, "yt-dlp", "-f", "bestaudio", "-o", "-", url)
-	
-	ffmpeg := exec.CommandContext(ctx,
-        "ffmpeg", "-i", "pipe:0",
-        "-analyzeduration", "0", "-loglevel", "0",
-        "-ac", "2", "-ar", "48000",
-        "-f", "s16le", "pipe:1",
-    )
+func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, url string) {
+    // 1) Encode + stream options
+    opts := dca.StdEncodeOptions
+    opts.RawOutput   = true
+    opts.Bitrate     = 96
+    opts.Application = "lowdelay"
 
-	r, w := io.Pipe()
-    ytdlp.Stdout = w
-    ffmpeg.Stdin = r
-
-	pcmOut, err := ffmpeg.StdoutPipe()
+    // 2) Create encoding session (yt-dlp + ffmpeg under the hood)
+    encodeSession, err := dca.EncodeFile(url, opts)
     if err != nil {
-        return err
+        log.Println("Encode error:", err)
+        return
     }
+    defer encodeSession.Cleanup()
 
-    if err := ytdlp.Start(); err != nil {
-        return err
-    }
-    if err := ffmpeg.Start(); err != nil {
-        return err
-    }
+    // 3) Start the DCA stream into the voice connection
+    done := make(chan error)
+    _ = dca.NewStream(encodeSession, vc, done)
 
-	vc.Speaking(true)
-	defer vc.Speaking(false)
-
-	vc.Speaking(true)
+    vc.Speaking(true)
     defer vc.Speaking(false)
 
-    frameSize := 1920
-    pcmBuf := make([]byte, frameSize*2*2) 
-    opusBuf := make([]byte, 4000)
-
-	for {
-        n, err := pcmOut.Read(pcmBuf)
-        if err != nil {
-            break
-        }
-        opusFrame, err := vc.OpusEncode(pcmBuf[:n], opusBuf)
-        if err != nil {
-            return err
-        }
-        vc.OpusSend <- opusBuf[:opusFrame]
+    // 4) Wait until stream finishes or errors
+    if err := <-done; err != nil && err != io.EOF {
+        log.Println("Stream error:", err)
     }
-    return nil
+
+    // 5) after done, leave channel
+    vc.Disconnect()
 }
