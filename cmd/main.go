@@ -30,10 +30,6 @@ func main() {
 		log.Fatalf("Error creating Discord session: %v", err)
 	}
 
-	dg.AddHandler(discord.InteractionCreate)
-    if err := discord.RegisterCommands(dg); err != nil {
-        log.Fatal("Cannot register commands:", err)
-    }
 	
 
 	err = dg.Open()
@@ -41,7 +37,11 @@ func main() {
 		log.Fatalf("Error opening connection: %v", err)
 	}
 	defer dg.Close()
-	discord.RegisterHandlers(dg)
+	discord.RegisterHandler(dg)
+	err = discord.RegisterCommand(dg)
+	if err != nil {
+    	log.Fatalf("Cannot register slash commands: %v", err)
+	}	
 	log.Println(`⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡟⠷⣶⣤⠀⠀⠀⠀⠀
 ⠀⠀⠀⢸⠟⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣼⡇⢀⣸⡇⠀⠀⠀⠀⠀
