@@ -20,7 +20,7 @@ import (
 // query: user-supplied YouTube URL
 // i: original InteractionCreate, so we can send follow-up messages
 func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, query string, i *discordgo.InteractionCreate) {
-	os.Setenv("DCA_FFMPEG_OPTS", "-hide_banner -loglevel debug -map 0:0")
+	os.Setenv("DCA_FFMPEG_OPTS", "-hide_banner -loglevel debug -map 0:a")
 	log.Printf("[PlayAudio] Start for query: %s", query)
 
 	// 1) Validate URL
@@ -71,14 +71,15 @@ func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, query string
 		vc.Disconnect()
 		return
 	}
+    tmpWebM.Close()
 	defer func() {
-		tmpWebM.Close()
+		/*tmpWebM.Close()*/
 		os.Remove(tmpWebM.Name())
 	}()
 
 	watchURL := fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
 	downloadCmd := exec.Command(
-		"yt-dlp",
+		".//yt-dlp",
 		"--rm-cache-dir",
 		"--no-cache-dir",
 		"--force-overwrites",
@@ -116,7 +117,7 @@ func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, query string
 		"-y",
 		"-i", tmpWebM.Name(),
 		"-c:a", "libopus",
-		"-f", "ogg",
+		"-f", "opus",
 		tmpOgg,
 	)
 	ffmpegCmd.Stdout = os.Stdout
