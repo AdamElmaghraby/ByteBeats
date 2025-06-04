@@ -111,6 +111,7 @@ func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, query string
 	log.Printf("[PlayAudio] WebM download complete, size: %d bytes", infoWebM.Size())
 
 	// 4) Convert WebM → pure Ogg/Opus via ffmpeg
+    /*
 	tmpOgg := tmpWebM.Name() + ".opus"
 	ffmpegCmd := exec.Command(
 		"ffmpeg",
@@ -143,6 +144,7 @@ func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, query string
 		return
 	}
 	log.Printf("[PlayAudio] ffmpeg re-encode complete, size: %d bytes", infoOgg.Size())
+    */
 
 	// 5) Notify user that playback is starting
 	s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
@@ -160,9 +162,9 @@ func PlayAudio(s *discordgo.Session, vc *discordgo.VoiceConnection, query string
 	pathToFFMPEG, lookErr := exec.LookPath("ffmpeg")
 	log.Printf("[PlayAudio] DCA will use ffmpeg from: %s (lookErr=%v)", pathToFFMPEG, lookErr)
 
-	encodeSession, err := dca.EncodeFile(tmpOgg, options)
+	encodeSession, err := dca.EncodeFile(tmpWebM.Name(), options)
 	if err != nil {
-		log.Printf("[PlayAudio] Failed to create encoding session for '%s': %v", tmpOgg, err)
+		log.Printf("[PlayAudio] Failed to create encoding session for '%s': %v", tmpWebM.Name(), err)
 		s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 			Content: fmt.Sprintf("❌ Encoding error: %v", err),
 		})
